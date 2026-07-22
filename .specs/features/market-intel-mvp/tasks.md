@@ -136,12 +136,14 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 **Requirement**: PANEL-01, PANEL-02, HIST-01
 **Tools**: MCP: `Supabase` (apply_migration, execute_sql) · Skill: NONE
 **Done when**:
-- [ ] Views: `v_price_band`, `v_top_items`, `v_item_evolution`, `v_rising_products`, `v_rising_terms`
-- [ ] Fixture check: seed 2 runs of known rows, each view returns the expected shape/values
+- [x] Views: `v_price_band`, `v_top_items`, `v_item_evolution`, `v_rising_products`, `v_rising_terms`
+- [x] Fixture check: seed 2 runs of known rows, each view returns the expected shape/values
 **Tests**: none (fixture-query verification)
 **Gate**: none
 **Verify**: seed sample rows via `execute_sql`; assert `v_price_band` min/median/max and `v_rising_products` delta match hand-computed values
 **Commit**: `feat(db): analytics views for panel`
+
+**T4 — COMPLETE.** Fixture (2 runs x 3 items + 2 trend rows) verified all 5 views against hand-computed values, then fully deleted (DB confirmed empty post-cleanup). `v_top_items` uses top 10 per run/term (N not specified in design; documented as a SQL comment).
 
 ---
 
