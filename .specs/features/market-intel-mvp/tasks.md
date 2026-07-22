@@ -93,13 +93,16 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 **Reuses**: n/a
 **Requirement**: infra / AUTH-01
 **Tools**: MCP: `Supabase` (create/list project, confirm) · Skill: NONE
+**Status note (2026-07-22)**: User created the project directly in the Supabase dashboard (`lovu-ml-analysis`, ref `aimmwwireujuhkuolgwv`, region `sa-east-1`, org `dgxtvoibbjefcdugavle`) — separate from existing `pact`/`delivery` projects. Confirmed dedicated and isolated.
 **Done when**:
-- [ ] New project exists and CLI is linked (`supabase link`)
-- [ ] Vault available (`vault` schema present)
-- [ ] Env vars documented (`.env.example`: SUPABASE_URL, SERVICE_ROLE, ML_CLIENT_ID/SECRET, redirect URI)
+- [x] New project exists and CLI is linked (`supabase link --project-ref aimmwwireujuhkuolgwv`)
+- [x] Vault available (`supabase_vault` extension already installed by default on this project)
+- [x] Env vars documented (`.env.example`: Supabase URL/publishable key/service role, ML client id/secret/redirect URI, panel Basic Auth)
 **Tests**: none
 **Gate**: none (manual verify)
 **Commit**: `chore(setup): provision dedicated supabase project`
+
+**T2 — COMPLETE.**
 
 ---
 
