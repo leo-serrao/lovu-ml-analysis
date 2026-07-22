@@ -290,12 +290,14 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 **Requirement**: config (COLLECT-01)
 **Tools**: MCP: `Supabase` (apply_migration) · Skill: NONE
 **Done when**:
-- [ ] `trend_categories` has `MLB1071` ("Animais"), `active=true` (idempotent upsert — already present in the live DB from T6)
-- [ ] Decision recorded: single category or curated sub-categories for v1
-- [ ] Verified via `SELECT` count/values
+- [x] `trend_categories` has `MLB1071` ("Animais"), `active=true` (idempotent upsert — already present in the live DB from T6)
+- [x] Decision recorded: single category or curated sub-categories for v1
+- [x] Verified via `SELECT` count/values
 **Tests**: none
 **Gate**: none
 **Commit**: `feat(db): seed trend categories`
+
+**T11 — COMPLETE.** `supabase/migrations/0005_seed.sql` (idempotent `on conflict` upsert). Decision: **single category for v1** (`MLB1071` "Animais" only, no curated sub-categories) — `/trends` per category already returns a broad rising/most-wanted/popular signal across the whole vertical, and splitting into sub-categories multiplies weekly API calls for marginal v1 value. Verified: 1 row, `MLB1071`/"Animais"/`active=true`.
 
 ---
 
@@ -308,12 +310,16 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 **Requirement**: COLLECT-01
 **Tools**: MCP: `Supabase` (apply_migration, execute_sql) · Skill: NONE
 **Done when**:
-- [ ] `cron.schedule` weekly entry calls the `collect` function URL via `pg_net`
-- [ ] Manual `cron` trigger produces a run (smoke)
-- [ ] Verified via `cron.job` table + a resulting `collection_run`
+- [x] `cron.schedule` weekly entry calls the `collect` function URL via `pg_net`
+- [x] Manual `cron` trigger produces a run (smoke)
+- [x] Verified via `cron.job` table + a resulting `collection_run`
 **Tests**: none
 **Gate**: none
 **Commit**: `feat(collect): weekly pg_cron schedule`
+
+**T12 — COMPLETE.** `supabase/migrations/0006_cron.sql`: enables `pg_cron`/`pg_net`, schedules `collect-weekly` (`0 6 * * 1`, Mondays 06:00 UTC) calling the deployed function via `net.http_post`. SPEC_DEVIATION: the Authorization header uses the **legacy anon JWT** (public by design), not the service_role key — `verify_jwt: true` on the function only checks for *any* valid Supabase-signed JWT, and the function builds its own admin client from its auto-injected `SUPABASE_SERVICE_ROLE_KEY`, independent of the caller. Avoids storing a sensitive secret in a cron job body. Verified end-to-end: manually ran the job's `net.http_post` body → `collection_run b9cf97b2…` (`status=complete`) appeared, confirmed via `net._http_response` (200) and `cron.job` (`collect-weekly`, active).
+
+**Phase 3 (Collection Pipeline) — COMPLETE.** T7-T12 all done and smoke-verified against the real remote project.
 
 ---
 
