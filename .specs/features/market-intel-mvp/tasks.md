@@ -4,7 +4,9 @@
 **Testing**: `.specs/codebase/TESTING.md`
 **Status**: Draft
 
-> **Critical ordering:** Phase 2 ends with **T6 — the `/search` de-risk spike**. If T6 confirms the `/search` 403 gotcha, STOP and reassess before Phase 3/4. No collection or panel-data work starts until T6 proves `/search` returns data with our token.
+> **SCOPE CHANGE (2026-07-22):** T6 confirmed the `/search` 403 gotcha as a real, unfixable platform restriction (see design.md T6 spike results). v1 is descoped to **`/trends`-only** — no price bands, no top items, no per-term competitors. T7, T9, T10, T11, T13, T14 below are rewritten for this scope; T3/T4's `search_snapshots`/`seed_terms`/`run_terms`/`v_price_band`/`v_top_items`/`v_item_evolution`/`v_rising_products` are now obsolete but left in place (not dropped) pending a decision — see spec.md Open Items.
+>
+> **Critical ordering (historical):** Phase 2 ended with **T6 — the `/search` de-risk spike**, which gated Phase 3/4. T6 is complete; the gate tripped (403 confirmed), triggering this rescope.
 
 > **Vercel scope guard (hard checkpoint):** Any Vercel create/deploy (T1.5, T15) MUST target the **personal account `leoserraos-projects`** (https://vercel.com/leoserraos-projects) — NEVER a company team, even if the MCP is authed to one. Confirm the exact team/scope with the user and wait for explicit approval BEFORE creating a project or deploying.
 
@@ -192,18 +194,18 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 
 ### T7: ML API Client [P]
 
-**What**: Typed wrapper over `/search` + `/trends` with throttle + exponential backoff on 429/5xx; per-call failure surfaced, never throws the whole run.
+**What**: Typed wrapper over `/trends` only (SCOPE CHANGE: `search()` dropped — `/sites/MLB/search` is platform-restricted, see T6) with throttle + exponential backoff on 429/5xx; per-call failure surfaced, never throws the whole run.
 **Where**: `lib/ml/client.ts`
 **Depends on**: T6
 **Reuses**: `lib/ml/oauth.ts`
 **Requirement**: COLLECT-01, COLLECT-03
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `search(query, {limit})` and `trends(categoryId)` implemented
+- [ ] `trends(categoryId)` implemented
 - [ ] Backoff on 429/5xx; returns typed results or a per-call error object
 - [ ] Response parsing + backoff logic unit-tested (mocked fetch)
 - [ ] Gate passes: `pnpm test`
-- [ ] Test count: ≥6 tests pass (no silent deletions)
+- [ ] Test count: ≥4 tests pass (no silent deletions)
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(ml): api client with throttle + backoff`
@@ -231,17 +233,17 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 
 ### T9: Snapshot Repository [P]
 
-**What**: DB writes for a run; pure domain→row mapping unit-tested, writes via Supabase client.
+**What**: DB writes for a run; pure domain→row mapping unit-tested, writes via Supabase client. SCOPE CHANGE: `saveSearchSnapshot`/`markTermStatus` dropped (no more seed terms/search) — `run_terms`/`seed_terms` are no longer written by the collector.
 **Where**: `lib/db/repository.ts`, `lib/db/mappers.ts`
 **Depends on**: T3
 **Reuses**: n/a
-**Requirement**: COLLECT-02, COLLECT-03
+**Requirement**: COLLECT-03
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `startRun/finishRun/saveSearchSnapshot/saveTrendSnapshot/markTermStatus/logError`
-- [ ] Pure mappers (ML item → search_snapshot row; trend entry → trend_snapshot row) unit-tested
+- [ ] `startRun/finishRun/saveTrendSnapshot/logError`
+- [ ] Pure mapper (trend entry → trend_snapshot row, deriving `trend_type` from position per design.md's documented grouping) unit-tested
 - [ ] Gate passes: `pnpm test`
-- [ ] Test count: ≥5 tests pass
+- [ ] Test count: ≥3 tests pass
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(db): snapshot repository + mappers`
@@ -250,38 +252,38 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 
 ### T10: Collector orchestrator (Edge Function)
 
-**What**: Thin Deno Edge Function entrypoint: open run → loop active seed terms (respecting `result_limit`) → search + write snapshots + per-term status → pull trends for active categories → close run. Wires T7/T8/T9.
+**What**: Thin Deno Edge Function entrypoint: open run → loop active `trend_categories` → pull trends + write snapshots → close run. SCOPE CHANGE: no more seed-term/search loop. Wires T7/T8/T9.
 **Where**: `supabase/functions/collect/index.ts`
 **Depends on**: T7, T8, T9
 **Reuses**: `lib/ml/client.ts`, `lib/ml/token-manager.ts`, `lib/db/repository.ts`
-**Requirement**: COLLECT-01, COLLECT-02, COLLECT-03, COLLECT-04
+**Requirement**: COLLECT-01, COLLECT-03, COLLECT-04
 **Tools**: MCP: `Supabase` (deploy_edge_function, get_logs) · Skill: NONE
 **Done when**:
-- [ ] Smoke run produces one `collection_run` + snapshots for all active terms with a shared timestamp
-- [ ] Empty term → `run_terms.status='empty'` (no rows); failing term → logged + run continues (`partial`)
+- [ ] Smoke run produces one `collection_run` + `trend_snapshots` for all active categories with a shared timestamp
+- [ ] Failing category → logged via `collection_errors` + run continues (`partial`)
 - [ ] Verified via `get_logs` + DB query after `supabase functions serve` invoke
 **Tests**: none (smoke run)
 **Gate**: none
-**Verify**: invoke locally; query `collection_runs`, `run_terms`, `search_snapshots` for the run
+**Verify**: invoke locally; query `collection_runs`, `trend_snapshots` for the run
 **Commit**: `feat(collect): weekly collector edge function`
 
 ---
 
 ### T11: Seed data
 
-**What**: Insert the 13 seed terms (priority + result_limit: high=100, normal=50) and active `trend_categories` (id from T6).
+**What**: Insert active `trend_categories`. SCOPE CHANGE: no more seed terms (13-term list dropped with `/search`). `MLB1071` ("Animais") was already manually inserted during T6 troubleshooting — this task formalizes it into a migration (idempotent) and is the place to decide whether to also track more specific pet sub-categories (see spec.md Open Items — time-boxed, don't over-invest).
 **Where**: `supabase/migrations/0004_seed.sql`
 **Depends on**: T3, T6
-**Reuses**: seed list in `context.md`
+**Reuses**: n/a
 **Requirement**: config (COLLECT-01)
 **Tools**: MCP: `Supabase` (apply_migration) · Skill: NONE
 **Done when**:
-- [ ] 7 high-priority food terms (`result_limit=100`), 6 normal accessory terms (`result_limit=50`)
-- [ ] `trend_categories` has the confirmed pet category, `active=true`
+- [ ] `trend_categories` has `MLB1071` ("Animais"), `active=true` (idempotent upsert — already present in the live DB from T6)
+- [ ] Decision recorded: single category or curated sub-categories for v1
 - [ ] Verified via `SELECT` count/values
 **Tests**: none
 **Gate**: none
-**Commit**: `feat(db): seed premium-pet terms + trend category`
+**Commit**: `feat(db): seed trend categories`
 
 ---
 
@@ -305,14 +307,14 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 
 ### T13: Panel read client + shell (expand existing skeleton)
 
-**What**: Add a server-side Supabase read client and a panel shell **to the existing skeleton from T1.5** (do NOT recreate scaffold). No Basic Auth yet.
+**What**: Add a server-side Supabase read client and a panel shell **to the existing skeleton from T1.5** (do NOT recreate scaffold). No Basic Auth yet. SCOPE CHANGE: reads trend-only views (T4's `v_rising_terms` + a new trend-history view — `v_price_band`/`v_top_items`/`v_item_evolution`/`v_rising_products` are obsolete, not read by the panel).
 **Where**: `lib/db/read-client.ts`, `app/(panel)/layout.tsx`
 **Depends on**: T1.5, T4
-**Reuses**: skeleton from T1.5; views from T4
-**Requirement**: PANEL-01 (support), PANEL-02 (support), PANEL-03 (support)
+**Reuses**: skeleton from T1.5; `v_rising_terms` from T4
+**Requirement**: PANEL-01 (support), PANEL-03 (support)
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] Server-side Supabase read client reads the analytics views
+- [ ] Server-side Supabase read client reads `v_rising_terms` (+ new trend-history view, if added)
 - [ ] Panel shell renders as an expansion of the existing skeleton
 - [ ] Gate passes: `pnpm build`
 **Tests**: none (manual verify)
@@ -323,21 +325,21 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 
 ### T14: Panel views + Basic Auth middleware
 
-**What**: Render per-term price bands, top items, rising products, rising terms (with single-run fallback), AND add HTTP Basic Auth via Next middleware — protection enters here, now that the panel exposes real data.
+**What**: Render rising/most-wanted/popular terms per tracked category (with single-run fallback), AND add HTTP Basic Auth via Next middleware — protection enters here, now that the panel exposes real data. SCOPE CHANGE: price bands/top items/competitors dropped (see spec.md).
 **Where**: `app/(panel)/page.tsx`, `app/(panel)/_components/*`, `middleware.ts`
 **Depends on**: T13, T4
-**Reuses**: views from T4, `lib/db/read-client.ts`
-**Requirement**: PANEL-01, PANEL-02, PANEL-03, PANEL-04
+**Reuses**: `v_rising_terms` from T4, `lib/db/read-client.ts`
+**Requirement**: PANEL-01, PANEL-03, PANEL-04
 **Tools**: MCP: NONE · Skill: `frontend-design` (optional, light)
 **Done when**:
-- [ ] Per seed term: competitors, price band (min/median/max), top items by sold_quantity
-- [ ] With ≥2 runs: rising products + rising terms; with 1 run: current-state + "history not yet available"
+- [ ] Per tracked category: rising terms, most-wanted terms, popular terms (latest run)
+- [ ] With 1 run: current-state + "history not yet available"; with ≥2 runs: term movement across runs
 - [ ] Partial run: renders available data, marks gaps
 - [ ] Requests without valid Basic Auth credentials get 401
 - [ ] Verified manually against seeded data; `pnpm build` passes
 **Tests**: none (manual verify)
 **Gate**: build
-**Commit**: `feat(panel): niche views + history fallback + basic auth`
+**Commit**: `feat(panel): trend views + history fallback + basic auth`
 
 ---
 
@@ -456,21 +458,20 @@ All three checks pass. ✅
 
 ## Requirement Coverage
 
+**SCOPE CHANGE (2026-07-22):** COLLECT-02, HIST-02, PANEL-02 dropped (search-based; see spec.md). Table below reflects the trends-only rework.
+
 | Requirement | Task(s) |
 | ----------- | ------- |
 | COLLECT-01 | T7, T10, T11, T12 |
-| COLLECT-02 | T3, T9, T10 |
 | COLLECT-03 | T7, T9, T10 |
 | COLLECT-04 | T8, T10 |
-| HIST-01 | T3, T4 |
-| HIST-02 | T3, T9 |
-| HIST-03 | T3, T4 |
+| HIST-01 | T3, T4 (view rework pending) |
+| HIST-03 | T3, T4 (view rework pending) |
 | PANEL-01 | T4, T13, T14 |
-| PANEL-02 | T4, T13, T14 |
 | PANEL-03 | T13, T14 |
 | PANEL-04 | T14, T15 |
-| AUTH-01 | T1.5, T5, T8 |
-| AUTH-02 | T6 |
-| AUTH-03 | T6 |
+| AUTH-01 | T1.5, T5, T8 — ✅ done |
+| AUTH-02 | T6 — ✅ done |
+| AUTH-03 | T6 — ✅ done |
 
-14/14 requirements mapped to tasks. 0 unmapped.
+11/11 active requirements mapped to tasks. 0 unmapped. 3 dropped (COLLECT-02, HIST-02, PANEL-02).
