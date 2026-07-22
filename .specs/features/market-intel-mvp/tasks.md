@@ -115,13 +115,15 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 **Requirement**: HIST-01, HIST-02, HIST-03, COLLECT-02, COLLECT-03
 **Tools**: MCP: `Supabase` (apply_migration, list_tables) · Skill: NONE
 **Done when**:
-- [ ] Tables: `seed_terms`, `trend_categories`, `collection_runs`, `run_terms`, `search_snapshots`, `trend_snapshots`, `collection_errors`
-- [ ] Indexes: `search_snapshots(seed_term_id, captured_at)`, `(ml_item_id)`, `(run_id)`, `trend_snapshots(run_id)`
-- [ ] `seed_terms` has `priority` + `result_limit`; `run_terms.status` ∈ {ok,empty,failed}
-- [ ] Verified via `list_tables` / query of `information_schema`
+- [x] Tables: `seed_terms`, `trend_categories`, `collection_runs`, `run_terms`, `search_snapshots`, `trend_snapshots`, `collection_errors`
+- [x] Indexes: `search_snapshots(seed_term_id, captured_at)`, `(ml_item_id)`, `(run_id)`, `trend_snapshots(run_id)`
+- [x] `seed_terms` has `priority` + `result_limit`; `run_terms.status` ∈ {ok,empty,failed}
+- [x] Verified via `list_tables` / query of `information_schema`
 **Tests**: none (verify via query)
 **Gate**: none
 **Commit**: `feat(db): snapshot schema + indexes`
+
+**T3 — COMPLETE.**
 
 ---
 
