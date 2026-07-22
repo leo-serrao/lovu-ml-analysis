@@ -23,6 +23,8 @@ Persistent memory: decisions, blockers, lessons, todos, deferred ideas.
 ## Constraints / guards
 
 - **Vercel deploys MUST go to personal account `leoserraos-projects` (https://vercel.com/leoserraos-projects), NEVER a company team.** Confirm exact scope with user and wait for explicit approval before any create/deploy (T1.5, T15).
+- **2026-07-22 — Vercel MCP cannot see the personal account.** `list_teams` only returns team `Sharpi` (`team_1MKc5RWokaj4THIb1z7IapNG`, company); `list_projects` for it lists only Sharpi projects. No personal-account scope is visible through this MCP connection. **Decision: user deploys manually** (CLI or dashboard) to `leoserraos-projects` for T1.5 and T15 — agent does not use the Vercel MCP for create/deploy on this project unless the MCP connection is re-authed to expose the personal scope (re-check via `list_teams` before ever using it for deploy again).
+- **2026-07-22 — T1.5 deployed and verified.** User imported the GitHub repo (`leo-serrao/lovu-ml-analysis`) via the Vercel dashboard into personal scope **"leoserraos's projects" (Hobby)** — confirmed correct scope, not Sharpi. Live at **https://lovu-ml-analysis.vercel.app**. Redirect URI for the ML app = `https://lovu-ml-analysis.vercel.app/api/ml-auth/callback` (confirmed working in production: 200 + echoes `code`). Local commits were pushed to `origin/main` first (`d4cc6e2`, `e33d497`) — repo had a remote configured but nothing had been pushed yet.
 
 ## Blockers
 

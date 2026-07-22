@@ -64,21 +64,24 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 
 ### T1.5: Minimal panel skeleton + initial Vercel deploy
 
-**What**: Commit a minimal Next.js skeleton and deploy it to the **personal Vercel account** so a stable HTTPS URL exists. `/api/ml-auth/callback` exists as a **stub** (returns 200, logs the received `code`) — no token exchange yet. This gives the redirect URI the user needs to register the ML app now.
+**What**: Commit a minimal Next.js skeleton with `/api/ml-auth/callback` as a **stub** (returns 200, logs the received `code`) — no token exchange yet. Deploy to the **personal Vercel account** so a stable HTTPS URL exists for the redirect URI.
 **Where**: `app/page.tsx` (placeholder), `app/api/ml-auth/callback/route.ts` (stub)
 **Depends on**: T1
 **Reuses**: n/a
 **Requirement**: AUTH-01 (enables redirect URI registration)
-**Tools**: MCP: `Vercel` (list_teams to confirm scope, deploy) · Skill: NONE
+**Tools**: MCP: NONE (see status note) · Skill: NONE
+**Status note (2026-07-22)**: The Vercel MCP connection only exposes the `Sharpi` company team (`list_teams` / `list_projects` show no personal-account scope). Per the hard scope guard, the agent did NOT use this MCP to create/deploy. **User deployed manually** via the Vercel dashboard, importing from GitHub (`leo-serrao/lovu-ml-analysis`, `main`) into the personal scope **"leoserraos's projects" (Hobby)** — confirmed correct, not Sharpi.
 **Done when**:
-- [ ] **Vercel scope confirmed with user = personal `leoserraos-projects` BEFORE any create/deploy (never a company team)**
-- [ ] Skeleton committed; deployed live on the personal Vercel account
-- [ ] `GET /api/ml-auth/callback?code=...` returns 200 and logs the code
-- [ ] Public HTTPS URL available for the user to register as the ML redirect URI
-- [ ] No Basic Auth yet (only a callback stub, no sensitive data exposed)
+- [x] Skeleton committed (`app/page.tsx`, `app/api/ml-auth/callback/route.ts`)
+- [x] `GET /api/ml-auth/callback?code=...` returns 200 and logs the code (verified locally AND in production)
+- [x] No Basic Auth yet (only a callback stub, no sensitive data exposed)
+- [x] User deployed manually to the personal Vercel account (`leoserraos's projects`, Hobby tier)
+- [x] Public HTTPS URL confirmed: **`https://lovu-ml-analysis.vercel.app`** — redirect URI = `https://lovu-ml-analysis.vercel.app/api/ml-auth/callback`
 **Tests**: none
-**Gate**: build — `pnpm build`
-**Commit**: `chore(deploy): minimal panel skeleton + initial vercel deploy`
+**Gate**: build — `pnpm build` (passed locally); production smoke-tested (`GET /` → 200, `GET /api/ml-auth/callback?code=teste123` → 200 `{"received":true,"code":"teste123"}`)
+**Commit**: `chore(deploy): minimal panel skeleton + ml-auth callback stub` (`e33d497`, pushed to `origin/main`, auto-deployed by Vercel)
+
+**T1.5 — COMPLETE.**
 
 ---
 
