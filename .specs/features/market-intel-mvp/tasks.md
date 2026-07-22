@@ -176,11 +176,14 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 **Requirement**: AUTH-02, AUTH-03
 **Tools**: MCP: `Supabase` · Skill: NONE
 **Done when**:
-- [ ] `/sites/MLB/search?q=petisco natural cachorro` returns items with our token (403 gotcha resolved or documented)
-- [ ] Real pet `category_id` confirmed (candidate `MLB1071`) and inserted into `trend_categories`
-- [ ] `/trends/MLB/{id}` returns entries (or degradation documented if seller-gated)
-- [ ] Outcome written to `design.md`; STATE.md decision logged
-- [ ] **If `/search` fails with our token → STOP, escalate to user before Phase 3/4**
+- [x] `/sites/MLB/search?q=petisco natural cachorro` returns items with our token (403 gotcha resolved or documented) — **documented as FAILING (403), not resolved**
+- [x] Real pet `category_id` confirmed (candidate `MLB1071`) and inserted into `trend_categories`
+- [x] `/trends/MLB/{id}` returns entries (or degradation documented if seller-gated) — works fine on a personal account
+- [x] Outcome written to `design.md`; STATE.md decision logged
+- [x] **If `/search` fails with our token → STOP, escalate to user before Phase 3/4** — STOPPED, escalating now
+
+**T6 — COMPLETE (spike ran, gate TRIPPED).** `/search` returns 403 with an otherwise-valid, working token (categories/trends/users-me all 200 with the same token) — matches widespread 2026 external reports of the endpoint being platform-restricted, not an account/scope issue we can fix locally. `/trends` and `/categories` fully confirmed working, including on a personal (non-seller) account. **Phase 3/4 (collection pipeline) is blocked pending user decision** — see STATE.md blockers.
+
 **Tests**: none (documented outcome)
 **Gate**: none
 **Commit**: `chore(spike): validate ml endpoints + resolve pet category`

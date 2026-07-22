@@ -30,13 +30,14 @@ Persistent memory: decisions, blockers, lessons, todos, deferred ideas.
 
 ## Blockers
 
-- **ML developer app not yet registered.** OAuth setup is a prerequisite for ALL data collection (search AND trends). No active seller account yet — must confirm which endpoints work without one.
+- **2026-07-22 — T6 GATE TRIPPED: `/sites/MLB/search` returns 403 forbidden with a valid, working token.** Same token succeeds on `/sites/MLB/categories`, `/trends/MLB/MLB1071`, and `/users/me` (all 200) — ruling out a general auth/account problem. Matches widespread external reports (2026) of this specific endpoint being platform-restricted regardless of valid credentials (see design.md T6 spike results for sources). **Blocks Phase 3/4** (the collection pipeline depends on `/search` for `search_snapshots`, the core "price band / top items" data). `/trends`-only work (rising terms) is unaffected. Needs a user decision: pursue ML support/whitelisting, find an alternative data source, or descope search-based collection for V0.
 
 ## Open questions (need validation before/at Design)
 
-- **Pet Shop `category_id`** — confirm live (often cited `MLB1246`, do NOT assume). Explicit Design item.
+- ~~Pet Shop `category_id`~~ — **RESOLVED 2026-07-22**: confirmed live as `MLB1071` ("Animais") via T6 spike.
+- ~~`/trends` seller-account requirement~~ — **RESOLVED 2026-07-22**: works fine on a personal (non-seller) account.
 - **Initial seed-list size** — decide concrete number (~15-20 terms) to dimension rate-limit strategy. Explicit Design item.
-- ML API rate limits and `/trends` access requirements (verify against current ML docs during Design — do not assume).
+- ML API rate limits (verify against current ML docs — do not assume). Untested; blocked behind the `/search` 403 issue anyway.
 - Physical snapshot data model (schema) — to be proposed with options in Design.
 - Exact cron mechanism (Supabase pg_cron + Edge Function vs external scheduler) — Design.
 - Panel framework (Next.js assumed) — confirm in Design.

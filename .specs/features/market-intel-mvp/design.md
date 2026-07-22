@@ -21,6 +21,19 @@ Verified via live API calls + ML developer docs. Confidence noted per item.
 
 **Open, deferred to first authenticated run:** exact pet `category_id` (candidate `MLB1071`), whether `/trends` needs a seller account, real 429 thresholds.
 
+### T6 spike results (verified live, 2026-07-22)
+
+Ran `scripts/spike-validate-ml.ts` against the real ML API with a token from the personal-account OAuth handshake (no seller account).
+
+| Endpoint | Result | Detail |
+| -------- | ------ | ------ |
+| `GET /sites/MLB/categories` | **200** | Pet category confirmed: **`MLB1071` = "Animais"** (candidate confirmed, not `MLB1246`). Seeded into `trend_categories`. |
+| `GET /sites/MLB/search?q=petisco natural cachorro` | **403 forbidden** `{"message":"forbidden","error":"forbidden"}` | Same token that works elsewhere. Not an account/scope issue on our side — matches widespread 2026 developer reports of `/sites/MLB/search` being platform-restricted regardless of valid auth ([Reclame Aqui report 1](https://www.reclameaqui.com.br/mercado-livre/erro-403-forbidden-ao-acessar-endpoint-sitesmlbsearch-da-api-do-mercado-livre_4HqcUyVoCdJmt4Lv/), [report 2](https://www.reclameaqui.com.br/mercado-livre/erro-403-forbidden-no-endpoint-de-busca-publica-de-anuncios-da-api-do-mercado-livre_kl_Q1h2_x_sPnREJ/)). |
+| `GET /trends/MLB/MLB1071` | **200** | Returns keyword/url pairs (e.g. `coleira cachorros`, `raçao`), consistent with the documented rising/most-wanted/popular position grouping. Works fine on a **personal (non-seller) account** — AUTH-03 concern resolved: no seller account needed for `/trends`. |
+| `GET /users/me` | **200** | Confirms personal account (not a store/seller). |
+
+**⚠️ GATE TRIPPED**: `/search` returns 403 with a valid, otherwise-working token. Per `tasks.md`, this STOPS Phase 3/4 (the collection pipeline, which depends on `/search` for `search_snapshots`) pending user decision on how to proceed. `/trends`-only data collection is unaffected and could proceed independently if scoped down.
+
 ---
 
 ## Architecture Overview

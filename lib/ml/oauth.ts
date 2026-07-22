@@ -84,12 +84,7 @@ export async function exchangeCodeForToken(
   return parseTokenExchangeResponse(json);
 }
 
-/**
- * Persists tokens to Supabase Vault via the ml_auth_set_secret RPC (see
- * supabase/migrations/0003_ml_auth_vault.sql). Called at request time from the
- * callback route with an issuance instant of "now".
- */
-export async function storeTokens(tokens: MlTokenResponse, issuedAt: Date): Promise<void> {
+function createSupabaseAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -97,7 +92,16 @@ export async function storeTokens(tokens: MlTokenResponse, issuedAt: Date): Prom
     throw new MlOAuthError("missing Supabase service-role env vars");
   }
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  return createClient(supabaseUrl, serviceRoleKey);
+}
+
+/**
+ * Persists tokens to Supabase Vault via the ml_auth_set_secret RPC (see
+ * supabase/migrations/0003_ml_auth_vault.sql). Called at request time from the
+ * callback route with an issuance instant of "now".
+ */
+export async function storeTokens(tokens: MlTokenResponse, issuedAt: Date): Promise<void> {
+  const supabase = createSupabaseAdminClient();
   const expiresAt = computeExpiresAt(issuedAt, tokens.expiresIn);
 
   const secrets: Array<[string, string]> = [
@@ -115,4 +119,25 @@ export async function storeTokens(tokens: MlTokenResponse, issuedAt: Date): Prom
       throw new MlOAuthError(`failed to persist secret ${name}: ${error.message}`);
     }
   }
+}
+
+/**
+ * Reads the currently stored ML access token from Vault via the
+ * ml_auth_get_secret RPC, with no refresh/rotation (see lib/ml/token-manager.ts,
+ * T8, for the full refresh flow used by the weekly collector).
+ */
+export async function getStoredAccessToken(): Promise<string> {
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase.rpc("ml_auth_get_secret", {
+    secret_name: "ml_access_token",
+  });
+
+  if (error) {
+    throw new MlOAuthError(`failed to read ml_access_token: ${error.message}`);
+  }
+  if (typeof data !== "string" || data.length === 0) {
+    throw new MlOAuthError("no ml_access_token found in Vault");
+  }
+
+  return data;
 }
