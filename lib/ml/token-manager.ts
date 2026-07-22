@@ -4,7 +4,7 @@ import {
   MlOAuthError,
   parseTokenExchangeResponse,
   type MlTokenResponse,
-} from "./oauth";
+} from "./oauth.ts";
 
 export interface RefreshTokenParams {
   refreshToken: string;

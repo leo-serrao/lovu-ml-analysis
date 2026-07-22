@@ -1,4 +1,4 @@
-import type { TrendEntry } from "../ml/client";
+import type { TrendEntry } from "../ml/client.ts";
 
 export type TrendType = "rising" | "most_wanted" | "popular";
 

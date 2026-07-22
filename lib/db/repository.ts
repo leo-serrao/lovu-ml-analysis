@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { TrendEntry } from "../ml/client";
-import { mapTrendEntryToRow } from "./mappers";
+import type { TrendEntry } from "../ml/client.ts";
+import { mapTrendEntryToRow } from "./mappers.ts";
 
 export class RepositoryError extends Error {}
 
