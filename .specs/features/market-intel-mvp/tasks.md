@@ -201,14 +201,16 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 **Requirement**: COLLECT-01, COLLECT-03
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] `trends(categoryId)` implemented
-- [ ] Backoff on 429/5xx; returns typed results or a per-call error object
-- [ ] Response parsing + backoff logic unit-tested (mocked fetch)
-- [ ] Gate passes: `pnpm test`
-- [ ] Test count: ≥4 tests pass (no silent deletions)
+- [x] `trends(categoryId)` implemented
+- [x] Backoff on 429/5xx; returns typed results or a per-call error object
+- [x] Response parsing + backoff logic unit-tested (mocked fetch)
+- [x] Gate passes: `pnpm test`
+- [x] Test count: ≥4 tests pass (no silent deletions)
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(ml): api client with throttle + backoff`
+
+**T7 — COMPLETE.** `lib/ml/client.ts`, 5 new tests (12/12 total passing). Non-retryable 4xx (e.g. 403) fails immediately; 429/5xx retried with exponential backoff (`baseDelayMs * 2^attempt`), giving up after `maxRetries` (default 3).
 
 ---
 
