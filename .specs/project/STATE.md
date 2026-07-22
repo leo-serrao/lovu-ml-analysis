@@ -19,6 +19,7 @@ Persistent memory: decisions, blockers, lessons, todos, deferred ideas.
 - **2026-07-21** (Design review) — `/search` 403 gotcha → formalized as **Task 0 validation spike** before building the pipeline; if confirmed, reorders downstream priority.
 - **2026-07-21** (Tasks) — Pragmatic testing (Vitest on pure logic only), new dedicated Supabase project, panel hosted on Vercel.
 - **2026-07-21** (Tasks review) — Added **T1.5**: minimal panel skeleton + stub `/api/ml-auth/callback` (200 + logs code) + early Vercel deploy, so the HTTPS redirect URI exists before T5. T5 now *implements* exchange in the existing route. Basic Auth moved from T13 → **T14** (protection only once data is exposed). T15 no longer duplicates redirect-URI/scaffold.
+- **2026-07-22 (T5)** — Supabase Vault isn't reachable from the app via `@supabase/supabase-js` alone (its functions live in the `vault` schema, not exposed via PostgREST). Added `supabase/migrations/0003_ml_auth_vault.sql`: two `SECURITY DEFINER` RPCs (`ml_auth_set_secret`/`ml_auth_get_secret`), `service_role`-only, called via `supabase.rpc(...)` from `lib/ml/oauth.ts`. This bumped T11's planned migration file to `0004_seed.sql` and T12's to `0005_cron.sql` (tasks.md updated).
 
 ## Constraints / guards
 

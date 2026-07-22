@@ -156,12 +156,14 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 **Requirement**: AUTH-01
 **Tools**: MCP: `Supabase` (Vault via execute_sql) · Skill: NONE
 **Done when**:
-- [ ] Route exchanges `code` → access + refresh token via ML `/oauth/token`
-- [ ] Tokens stored as Vault secrets (`ml_access_token`, `ml_refresh_token`, `ml_token_expires_at`)
-- [ ] Pure exchange/parse logic in `lib/ml/oauth.ts` unit-tested
+- [x] Route exchanges `code` → access + refresh token via ML `/oauth/token`
+- [x] Tokens stored as Vault secrets (`ml_access_token`, `ml_refresh_token`, `ml_token_expires_at`)
+- [x] Pure exchange/parse logic in `lib/ml/oauth.ts` unit-tested
 **Tests**: unit (token exchange parsing)
 **Gate**: quick — `pnpm test`
 **Commit**: `feat(auth): ml oauth token exchange + vault storage`
+
+**T5 — COMPLETE.** `pnpm test` 7/7 passing, `pnpm build` green. SPEC_DEVIATION: added `supabase/migrations/0003_ml_auth_vault.sql` (not in the original file list) — Vault (`vault.create_secret`/`vault.decrypted_secrets`) isn't exposed via PostgREST, so two SECURITY DEFINER wrapper RPCs (`ml_auth_set_secret`/`ml_auth_get_secret`, service_role-only) were required for the app to persist tokens at request time. **This shifts T11's seed migration to `0004_seed.sql` and T12's cron migration to `0005_cron.sql`** (updated below).
 
 ---
 
@@ -265,7 +267,7 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 ### T11: Seed data
 
 **What**: Insert the 13 seed terms (priority + result_limit: high=100, normal=50) and active `trend_categories` (id from T6).
-**Where**: `supabase/migrations/0003_seed.sql`
+**Where**: `supabase/migrations/0004_seed.sql`
 **Depends on**: T3, T6
 **Reuses**: seed list in `context.md`
 **Requirement**: config (COLLECT-01)
@@ -283,7 +285,7 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 ### T12: Weekly schedule (pg_cron + pg_net)
 
 **What**: Schedule the collector to run weekly by invoking the Edge Function via pg_net.
-**Where**: `supabase/migrations/0004_cron.sql`
+**Where**: `supabase/migrations/0005_cron.sql`
 **Depends on**: T10
 **Reuses**: n/a
 **Requirement**: COLLECT-01
