@@ -378,11 +378,16 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 **Requirement**: PANEL-04
 **Tools**: MCP: `Vercel` (deploy to the same personal project) · Skill: NONE
 **Done when**:
-- [ ] **Deploy targets the same personal `leoserraos-projects` project (confirm scope, never company team)**
-- [ ] Expanded panel live; deployed URL rejects access without Basic Auth (401)
-- [ ] Env vars set in Vercel (Supabase, ML client id/secret)
+- [x] **Deploy targets the same personal `leoserraos-projects` project (confirm scope, never company team)**
+- [x] Expanded panel live; deployed URL rejects access without Basic Auth (401)
+- [x] Env vars set in Vercel (Supabase, ML client id/secret)
 **Tests**: none (manual verify)
 **Gate**: none
+**Commit**: (deploy only, no new code commit; see T13/T14 commits `52e98fb`/`d89c013`)
+
+**T15 — COMPLETE.** Vercel MCP still only exposes the `Sharpi` company team (re-checked `list_teams`) — per the standing scope guard, the agent did not use it to deploy. 11 pending local commits (all of Phase 3 + T13/T14) were pushed to `origin/main` (user-approved), which auto-deployed via the GitHub integration set up in T1.5. Verified `https://lovu-ml-analysis.vercel.app/` returns 401 without credentials and `/api/ml-auth/callback` remains reachable without Basic Auth (matcher exclusion holds in production). User confirmed in the Vercel dashboard: deploy landed on the personal `leoserraos-projects` scope (not Sharpi), and all required env vars (Supabase URL/publishable key/service role, ML client id/secret/redirect URI, `PANEL_BASIC_AUTH_USER`/`PASSWORD`) are set.
+
+**Phase 4 (Panel) — COMPLETE.** T13-T15 all done.
 **Commit**: `chore(deploy): promote panel with views + auth`
 
 ---
