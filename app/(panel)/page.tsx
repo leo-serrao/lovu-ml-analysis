@@ -7,6 +7,7 @@ import {
   getTrendTermHistory,
 } from "@/lib/db/read-client";
 import { buildMovementMap, groupLatestSnapshotsByCategory } from "@/lib/panel/trend-view";
+import { CategoryTabs } from "./_components/CategoryTabs";
 import { CategoryTrends } from "./_components/CategoryTrends";
 import { RunStatusBanner } from "./_components/RunStatusBanner";
 
@@ -24,20 +25,23 @@ export default async function PanelHome() {
   const movements = buildMovementMap(history);
   const groupsByCategory = groupLatestSnapshotsByCategory(latestSnapshots);
 
+  const tabs = categories.map((category) => ({
+    id: category.id,
+    label: category.label,
+    content: (
+      <CategoryTrends
+        category={category}
+        groups={groupsByCategory.get(category.id)}
+        movements={movements}
+        showMovement={showMovement}
+      />
+    ),
+  }));
+
   return (
     <div className="flex flex-col gap-6">
       <RunStatusBanner latestRun={latestRun} runCount={runCount} />
-      <div className="flex flex-col gap-4">
-        {categories.map((category) => (
-          <CategoryTrends
-            key={category.id}
-            category={category}
-            groups={groupsByCategory.get(category.id)}
-            movements={movements}
-            showMovement={showMovement}
-          />
-        ))}
-      </div>
+      <CategoryTabs tabs={tabs} />
     </div>
   );
 }

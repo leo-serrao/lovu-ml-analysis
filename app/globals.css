@@ -1,26 +1,74 @@
 @import "tailwindcss";
 
+/* LOVU brand tokens, synced from the claude.ai/design "LOVU Design System" project. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  --charcoal: #434446;
+  --cream: #efe7d6;
+  --ivory: #fbfaf6;
+  --gold: #f8dda8;
+  --gold-dark: #e9c079;
+  --sage: #c7ddcb;
+  --sage-dark: #9fc2a6;
+  /* Not in the brand kit -- functional extension for negative rank movement / run failures, kept low-saturation to stay in the warm-neutral family. */
+  --decline: #b5654f;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --text-primary: var(--charcoal);
+  --text-secondary: #7a7b7d;
+  --surface-page: var(--ivory);
+  --surface-card: #ffffff;
+  --surface-sunken: var(--cream);
+  --border-subtle: #e2ddd1;
+  --shadow-card: 0 1px 2px rgba(67, 68, 70, 0.06), 0 4px 16px rgba(67, 68, 70, 0.08);
+  --shadow-lifted: 0 8px 24px rgba(67, 68, 70, 0.14);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --surface-page: var(--charcoal);
+    --surface-card: #4d4e51;
+    --surface-sunken: #3a3b3d;
+    --border-subtle: #5a5b5d;
+    --text-primary: var(--ivory);
+    --text-secondary: #b9b6ac;
   }
 }
 
+:root[data-theme="dark"] {
+  --surface-page: var(--charcoal);
+  --surface-card: #4d4e51;
+  --surface-sunken: #3a3b3d;
+  --border-subtle: #5a5b5d;
+  --text-primary: var(--ivory);
+  --text-secondary: #b9b6ac;
+}
+
+@theme inline {
+  --color-charcoal: var(--charcoal);
+  --color-cream: var(--cream);
+  --color-ivory: var(--ivory);
+  --color-gold: var(--gold);
+  --color-gold-dark: var(--gold-dark);
+  --color-sage: var(--sage);
+  --color-sage-dark: var(--sage-dark);
+  --color-decline: var(--decline);
+
+  --color-ink: var(--text-primary);
+  --color-muted: var(--text-secondary);
+  --color-page: var(--surface-page);
+  --color-card: var(--surface-card);
+  --color-sunken: var(--surface-sunken);
+  --color-line: var(--border-subtle);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-lifted: var(--shadow-lifted);
+
+  --font-sans: var(--font-montserrat);
+  --font-logo: var(--font-julius);
+  --font-subtitle: var(--font-questrial);
+  --font-mono: var(--font-geist-mono);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface-page);
+  color: var(--text-primary);
 }

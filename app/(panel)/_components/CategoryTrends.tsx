@@ -20,17 +20,15 @@ export function CategoryTrends({
   showMovement: boolean;
 }) {
   return (
-    <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-      <h2 className="mb-3 font-medium text-black dark:text-zinc-50">{category.label}</h2>
+    <section className="rounded-lg border border-line bg-card p-5 shadow-card">
+      <h2 className="mb-4 text-lg font-semibold text-ink">{category.label}</h2>
       {!groups ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-500">
-          No data for this category in the latest run.
-        </p>
+        <p className="text-sm text-muted">No data for this category in the latest run.</p>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           {(["rising", "most_wanted", "popular"] as const).map((type) => (
             <div key={type}>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+              <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
                 {SECTION_LABELS[type]}
               </h3>
               <TermList
