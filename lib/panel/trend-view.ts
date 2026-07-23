@@ -1,3 +1,4 @@
+import { isBlocked } from "./blocklist.ts";
 import type { LatestTrendSnapshotRow, TrendTermHistoryRow } from "../db/read-client.ts";
 
 export type TrendType = "rising" | "most_wanted" | "popular";
@@ -9,13 +10,19 @@ export interface CategoryTrendGroups {
   byType: Record<TrendType, LatestTrendSnapshotRow[]>;
 }
 
-/** Groups the latest run's snapshots by category, then by trend type, ordered by position. */
+/**
+ * Groups the latest run's snapshots by category, then by trend type, ordered by
+ * position. Blocklisted keywords (sensitive/out-of-scope, see blocklist.ts) are
+ * dropped here -- they stay in the raw trend_snapshots data, just never rendered.
+ */
 export function groupLatestSnapshotsByCategory(
   snapshots: LatestTrendSnapshotRow[],
 ): Map<string, CategoryTrendGroups> {
   const groups = new Map<string, CategoryTrendGroups>();
 
   for (const snapshot of snapshots) {
+    if (isBlocked(snapshot.keyword)) continue;
+
     let group = groups.get(snapshot.category_id);
     if (!group) {
       group = {
