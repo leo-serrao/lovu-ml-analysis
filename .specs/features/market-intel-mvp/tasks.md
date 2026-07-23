@@ -332,32 +332,40 @@ T13 → T14 → T15   (expands the skeleton from T1.5; adds views + Basic Auth)
 **Requirement**: PANEL-01 (support), PANEL-03 (support)
 **Tools**: MCP: NONE · Skill: NONE
 **Done when**:
-- [ ] Server-side Supabase read client reads `v_rising_terms` (+ new trend-history view, if added)
-- [ ] Panel shell renders as an expansion of the existing skeleton
-- [ ] Gate passes: `pnpm build`
+- [x] Server-side Supabase read client reads `v_rising_terms` (+ new trend-history view, if added)
+- [x] Panel shell renders as an expansion of the existing skeleton
+- [x] Gate passes: `pnpm build`
 **Tests**: none (manual verify)
 **Gate**: build
 **Commit**: `feat(panel): read client + shell over existing skeleton`
+
+**T13 — COMPLETE.** Added `supabase/migrations/0007_trend_history_views.sql`: `v_latest_trend_snapshots` (all trend types, latest run, per category) and `v_trend_term_history` (full cross-run history per category+keyword) alongside T4's `v_rising_terms`. `lib/db/read-client.ts` (server-only, service_role) exposes `getTrackedCategories`/`getLatestTrendSnapshots`/`getTrendTermHistory`/`getRunCount`. Skeleton expanded into an `app/(panel)/` route group (`layout.tsx` shell + `page.tsx`, replacing root `app/page.tsx`). SPEC_DEVIATION: added `export const dynamic = "force-dynamic"` on the panel layout — without it, Next statically prerendered `/` at build time (baking in build-time DB data), which would silently go stale between weekly collection runs. `pnpm build` green (`/` now `ƒ` dynamic), `pnpm test` 22/22 passing.
 
 ---
 
 ### T14: Panel views + Basic Auth middleware
 
 **What**: Render rising/most-wanted/popular terms per tracked category (with single-run fallback), AND add HTTP Basic Auth via Next middleware — protection enters here, now that the panel exposes real data. SCOPE CHANGE: price bands/top items/competitors dropped (see spec.md).
-**Where**: `app/(panel)/page.tsx`, `app/(panel)/_components/*`, `middleware.ts`
+**Where**: `app/(panel)/page.tsx`, `app/(panel)/_components/*`, `proxy.ts` (was `middleware.ts` in the plan; renamed per this Next.js version, see COMPLETE note)
 **Depends on**: T13, T4
 **Reuses**: `v_rising_terms` from T4, `lib/db/read-client.ts`
 **Requirement**: PANEL-01, PANEL-03, PANEL-04
 **Tools**: MCP: NONE · Skill: `frontend-design` (optional, light)
 **Done when**:
-- [ ] Per tracked category: rising terms, most-wanted terms, popular terms (latest run)
-- [ ] With 1 run: current-state + "history not yet available"; with ≥2 runs: term movement across runs
-- [ ] Partial run: renders available data, marks gaps
-- [ ] Requests without valid Basic Auth credentials get 401
-- [ ] Verified manually against seeded data; `pnpm build` passes
+- [x] Per tracked category: rising terms, most-wanted terms, popular terms (latest run)
+- [x] With 1 run: current-state + "history not yet available"; with ≥2 runs: term movement across runs
+- [x] Partial run: renders available data, marks gaps
+- [x] Requests without valid Basic Auth credentials get 401
+- [x] Verified manually against seeded data; `pnpm build` passes
 **Tests**: none (manual verify)
 **Gate**: build
 **Commit**: `feat(panel): trend views + history fallback + basic auth`
+
+**T14 — COMPLETE.** `lib/panel/trend-view.ts` (pure grouping/movement helpers), `app/(panel)/_components/{CategoryTrends,TermList,RunStatusBanner}.tsx`, rewritten `app/(panel)/page.tsx` rendering rising/most-wanted/popular per category with cross-run movement badges (▲/▼/–) once ≥2 runs exist. `RunStatusBanner` covers: no runs yet, partial/failed latest run, and the single-run "history not yet available" case. SPEC_DEVIATIONS:
+- **`middleware.ts` → `proxy.ts`**: this Next.js version (16.2.11) deprecated the `middleware` file convention in favor of `proxy` (same API, renamed export) — confirmed via `node_modules/next/dist/docs/.../proxy.md` and a live build warning. Implemented as `proxy.ts` exporting `proxy()`.
+- Basic Auth **fails closed**: if `PANEL_BASIC_AUTH_USER`/`PASSWORD` aren't set, every request gets 401 rather than passing through unprotected (matches spec's "never publicly reachable without a barrier").
+- Added `supabase/migrations/0008_latest_trend_snapshots_status_filter.sql`: fixed T13's `v_latest_trend_snapshots` to skip `status='failed'` runs (which have zero snapshot rows by construction — see `supabase/functions/collect/index.ts`), so a failed run doesn't blank the panel instead of falling back to the last good run.
+- Manually verified against the real seeded data (2 completed runs from T10/T12 smoke tests): no-auth → 401, wrong creds → 401, correct creds → 200, `/api/ml-auth/callback` reachable without auth (matcher exclusion confirmed), all 50 terms rendered across the 3 sections for `MLB1071`, movement badges showed "–" (both runs ~10min apart, same live snapshot). `pnpm build`/`pnpm test` (22/22)/`pnpm lint` all green.
 
 ---
 

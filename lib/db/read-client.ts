@@ -90,6 +90,30 @@ export async function getTrendTermHistory(
   return data ?? [];
 }
 
+export interface CollectionRunRow {
+  id: string;
+  started_at: string;
+  status: "running" | "complete" | "partial" | "failed";
+}
+
+/** Most recent collection run (any status) -- drives the partial-run banner. */
+export async function getLatestRun(
+  client: SupabaseClient,
+): Promise<CollectionRunRow | null> {
+  const { data, error } = await client
+    .from("collection_runs")
+    .select("id, started_at, status")
+    .order("started_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new ReadClientError(`failed to load latest run: ${error.message}`);
+  }
+
+  return data;
+}
+
 /** Number of finished collection runs -- drives the single-run fallback (spec P1 AC2). */
 export async function getRunCount(client: SupabaseClient): Promise<number> {
   const { count, error } = await client
